@@ -40,7 +40,7 @@ public class Order {
     public void setUserId(String userId) { this.userId = userId; }
 
     public Status getStatus() { return status.get(); }
-    public void setStatus(Status s) {
+    public synchronized void setStatus(Status s) {
         this.status.set(s);
         this.updatedAt = Instant.now();
     }
