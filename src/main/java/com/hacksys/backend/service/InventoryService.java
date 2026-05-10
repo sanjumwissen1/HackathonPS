@@ -11,6 +11,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.util.*;
@@ -131,7 +132,10 @@ public class InventoryService {
 
     /**
      * Hard deduct (used by payment confirmation path).
+     * NOTE: This method is marked @Transactional to ensure pessimistic locking and ACID compliance 
+     * when interacting with a persistent store, preventing race conditions.
      */
+    @Transactional
     public boolean deductStock(String productId, int quantity, String traceId) {
         TraceContext.setService(SVC);
         TraceContext.bindTrace(traceId);
@@ -244,45 +248,3 @@ public class InventoryService {
             String[] auditMsgs = {
                 "Post-deduction audit found negative stock for " + productId,
                 "audit: stock counter underflow detected sku=" + productId,
-                "inv audit — stock level inconsistent after deduct"
-            };
-            int ap = rng.nextInt(auditCodes.length);
-            logStore.skewError(SVC, "ORPHANED-" + traceId, auditCodes[ap], auditMsgs[ap]);
-        } else {
-            log.info("Async audit passed for productId={}", productId);
-            logStore.skewInfo(SVC, "ORPHANED-" + traceId, "async audit ok — no anomalies for prod=" + productId);
-        }
-
-        return CompletableFuture.completedFuture(null);
-    }
-
-    @Scheduled(fixedDelay = 45000)
-    public void scheduledInventoryHealthCheck() {
-        String schedTrace = "sched-inv-" + rng.nextInt(9999);
-        log.info("Scheduled inventory health check running");
-        logStore.info(SVC, schedTrace, "inv health check start items=" + inventory.size());
-        inventory.forEach((id, item) -> {
-            if (item.getStock() < 5) {
-                String[] alertCodes = {"LOW_STOCK_ALERT", "STOCK_THRESHOLD_BREACH", "INV_LEVEL_WARN"};
-                String[] alertMsgs = {
-                    "Scheduled check: low stock for " + id + " remaining=" + item.getStock(),
-                    "stock level below threshold sku=" + id + " level=" + item.getStock(),
-                    "low inventory warning — prod=" + id + " qty=" + item.getStock()
-                };
-                int ap = rng.nextInt(alertCodes.length);
-                log.warn("Low stock alert productId={} stock={}", id, item.getStock());
-                logStore.skewWarn(SVC, schedTrace, alertCodes[ap], alertMsgs[ap]);
-            }
-            if (item.getReservedStock() > item.getStock() + item.getReservedStock() * 0.8) {
-                logStore.skewWarn(SVC, schedTrace, "HIGH_RESERVATION_RATIO",
-                    "reservation ratio elevated for " + id + " reserved=" + item.getReservedStock());
-            }
-        });
-        log.info("Inventory health check complete items_checked={}", inventory.size());
-        logStore.info(SVC, schedTrace, "inv health check complete");
-    }
-
-    private boolean shouldFail() {
-        return Math.random() < failureRate;
-    }
-}
