@@ -52,7 +52,12 @@ public class Order {
     public Instant getUpdatedAt() { return updatedAt; }
 
     public String getPaymentId() { return paymentId; }
-    public void setPaymentId(String paymentId) { this.paymentId = paymentId; }
+    public void setPaymentId(String paymentId) {
+        if (!isReadyForPayment()) {
+            throw new IllegalStateException("Order not ready for payment");
+        }
+        this.paymentId = paymentId;
+    }
 
     public String getFailureReason() { return failureReason; }
     public void setFailureReason(String failureReason) { this.failureReason = failureReason; }
@@ -76,5 +81,9 @@ public class Order {
         public void setQuantity(int quantity) { this.quantity = quantity; }
         public double getUnitPrice() { return unitPrice; }
         public void setUnitPrice(double unitPrice) { this.unitPrice = unitPrice; }
+    }
+
+    private boolean isReadyForPayment() {
+        return status.get() == Status.PAID;
     }
 }
