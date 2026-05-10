@@ -1,3 +1,4 @@
+// StackMedic Fix for INC-0016: Add a null‑check and explicit state validation in PaymentService to ensure order.getStatus() equals PAID before proceeding with payment processing; if the status is FAILED, CANCELLED, or any non‑payable value, abort the transaction.
 package com.hacksys.backend.service;
 
 import com.hacksys.backend.model.Order;
