@@ -1,3 +1,4 @@
+// StackMedic Fix for INC-0004: Review the asynchronous confirmation method within PaymentService.java. First, increase the configured timeout for the async task execution if the current limit is too aggressive for expected external latency. Second, implement a robust retry mechanism (e.g., using Spring Retry or similar logic) with exponential backoff around critical external calls (like notification dispatching). Finally, ensure that upon timeout failure, the service logs detailed context and attempts to persist a 'CONFIRMATION_FAILED' state rather than simply failing silently.
 package com.hacksys.backend.service;
 
 import com.hacksys.backend.model.Order;
