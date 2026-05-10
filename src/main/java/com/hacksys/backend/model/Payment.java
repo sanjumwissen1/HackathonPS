@@ -13,6 +13,7 @@ public class Payment {
     private String id;
     private String orderId;
     private String userId;
+    private String idempotencyKey;
     private double amount;
     private Status status;
     private Instant createdAt;
@@ -41,6 +42,9 @@ public class Payment {
 
     public String getUserId() { return userId; }
     public void setUserId(String userId) { this.userId = userId; }
+
+    public String getIdempotencyKey() { return idempotencyKey; }
+    public void setIdempotencyKey(String idempotencyKey) { this.idempotencyKey = idempotencyKey; }
 
     public double getAmount() { return amount; }
     public void setAmount(double amount) { this.amount = amount; }
