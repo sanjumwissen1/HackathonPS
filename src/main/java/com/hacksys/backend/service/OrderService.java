@@ -15,10 +15,6 @@ import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.*;
 
-/**
- * OrderService — manages order lifecycle including creation, reservation, payment and cancellation.
- */
-@Service
 public class OrderService {
 
     private static final Logger log = LoggerFactory.getLogger(OrderService.class);
@@ -33,7 +29,6 @@ public class OrderService {
     private final ConcurrentHashMap<String, Order> orders = new ConcurrentHashMap<>();
     private static final Random rng = new Random();
 
-    // Setter injection to break circular dependency with PaymentService
     public void setInventoryService(InventoryService inventoryService) {
         this.inventoryService = inventoryService;
     }
@@ -207,7 +202,10 @@ public class OrderService {
             return false;
         }
 
-        order.setStatus(Order.Status.PAID);
+        if (!writeOrderStatusSafely(order)) {
+            // Already logged failure
+            return false;
+        }
         order.setPaymentId(paymentId);
 
         log.info("Order marked PAID orderId={}", orderId);
@@ -264,7 +262,7 @@ public class OrderService {
                 "release deferred — stock hold not cleared for orderId=" + orderId
             };
             int di = rng.nextInt(dCodes.length);
-            log.info("Inventory release deferred — orderId={}", orderId);
+            log.info("Inventory release deferred — orderid={}", orderId);
             logStore.warn(SVC, traceId, dCodes[di], dMsgs[di]);
         }
 
@@ -288,7 +286,6 @@ public class OrderService {
         try {
             Thread.sleep(2000 + new Random().nextInt(3000));
         } catch (InterruptedException ignored) {}
-
 
         Order order = orders.get(orderId);
         if (order == null) {
@@ -324,4 +321,21 @@ public class OrderService {
     private boolean shouldFail() {
         return Math.random() < failureRate;
     }
-}
+
+    private static boolean writeOrderStatusSafely(Order order) {
+        int maxAttempts = 5;
+        long baseDelayMs = 100;
+        for (int attempt = 1; attempt <= maxAttempts; attempt++) {
+            try {
+                order.setStatus(Order.Status.PAID);
+                order.setPaymentId(order.getPaymentId());
+                return true;
+            } catch (Exception e) {
+                if (attempt == maxAttempts) {
+                    log.error("Failed to update order status after retries orderId={}", order.getOrderId(), e);
+                    logStore.error(SVC, "ASYNC-ORPHAN", "DB_WRITE_FAILURE",
+                            "Order status update failed — orderId=" + order.getOrderId() + " write did not complete");
+                } else {
+                    long delay = baseDelayMs * (1 << (attempt - 1));
+                    Thread.sleep(delay);
+                }
