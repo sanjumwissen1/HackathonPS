@@ -3,126 +3,128 @@
 | Field | Value |
 |---|---|
 | **Incident ID** | `INC-0012` |
-| **Generated** | 2026-05-10T09:49:31.877588100Z |
-| **Service** | InventoryService |
+| **Generated** | 2026-05-10T10:12:53.952334300Z |
+| **Service** | PaymentService |
 | **Severity** | CRITICAL |
 | **Status** | REMEDIATING |
-| **RCA Confidence** | 92% |
+| **RCA Confidence** | 30% |
 
 ---
 
 ## Root Cause
 
-A massive hard stock deduction of 999 units was initiated for PROD-005, which had insufficient inventory to support this operation. This caused the stock level to go negative (-367593), indicating the product had approximately 632 units available before the deduction. This suggests either a data corruption issue, an erroneous bulk operation, or a system bug that allowed an oversized deduction to proceed without proper validation checks.
+Automated analysis unavailable. Error type: NONE. Manual investigation required.
 
 ## Impact
 
-Critical inventory data corruption affecting PROD-005 with severe negative stock levels. Secondary impacts include store timeouts, inventory service timeouts causing incomplete reservations for other products (PROD-001, PROD-002), and cascading failures across the inventory management system. This likely prevents accurate stock tracking, order fulfillment, and could lead to overselling or underselling scenarios across the platform.
+Service degradation detected. Impact assessment pending manual review.
 
 ## Code Fix Applied
 
-Added stock validation check in deductStock method to prevent negative stock levels by checking if sufficient inventory exists before performing the deduction operation.
+AI could not generate a code fix — see report file for root cause details.
 
 ## Error Patterns
 
 - `NONE`
-- `NEGATIVE_STOCK`
-- `STORE_TIMEOUT`
-- `INV_TIMEOUT`
+- `PAY_CONFIRM_ERR`
+- `AUTH_ON_TERMINAL_ORDER`
+- `ORDER_SYNC_FAILURE`
+- `ASYNC_CONFIRM_TIMEOUT`
+- `ORDER_STATE_MISMATCH`
+- `PAY_GATEWAY_ERR`
+- `UNEXPECTED_ORDER_STATUS`
+- `GTWY_TMO`
+- `CONFIRM_NOTIFICATION_FAILED`
+- `PAYMENT_SVC_TIMEOUT`
 - `INSUFFICIENT_STOCK`
-- `INV_LEVEL_WARN`
-- `HIGH_RESERVATION_RATIO`
-- `LOW_STOCK_ALERT`
-- `STOCK_THRESHOLD_BREACH`
-- `STOCK_BELOW_ZERO`
-- `WAREHOUSE_DELAY`
-- `STOCK_LEVEL_ANOMALY`
+- `ITEM_RESERVATION_FAILED`
+- `STATE_UNRESOLVED`
+- `INV_PHASE_INCOMPLETE`
+- `INV_RESERVATION_INCOMPLETE`
 
 ## Trace IDs
 
-- `sched-inv-5382`
-- `stock-sync-56024ab5`
-- `recon-f02374e8`
-- `pay-poll-e7e0df25`
-- `pay-retry-930d6d60`
-- `retry-9357b1cd`
-- `sched-inv-9665`
-- `stock-sync-48ef0fc6`
-- `pay-retry-f9915186`
-- `recon-aa7d6455`
-- `pay-poll-d6410438`
-- `retry-e21c99e7`
-- `sched-inv-4589`
-- `stock-sync-e43c7e34`
-- `recon-c51efabc`
-- `pay-retry-6ac0f050`
-- `blind-247d725e`
-- `retry-c0e6634b`
-- `sched-inv-827`
-- `pay-poll-b7ad840e`
-- `recon-70cde152`
-- `cascade-f2716919`
-- `stock-sync-6a518b88`
-- `recon-546e0f53`
-- `retry-0620ff02`
-- `sched-inv-5825`
-- `blind-4589482c`
-- `stock-sync-24ad27d7`
-- `pay-retry-39eacc2f`
-- `recon-6f784fee`
-- `retry-5969238a`
-- `sched-inv-342`
-- `pay-retry-c5acbf70`
-- `stock-sync-67841e92`
-- `pay-poll-1701eea5`
-- `blind-8909aaa6`
-- `sched-inv-4539`
-- `stock-sync-fdd37511`
-- `recon-90389129`
-- `retry-db424dd5`
-- `cascade-5b19a0ee`
-- `pay-retry-a4285c83`
-- `stock-sync-4e3dc995`
-- `recon-1344da53`
-- `blind-97873780`
-- `retry-f9e58a4e`
-- `sched-inv-6229`
-- `recon-0f1c5254`
-- `pay-retry-d4bf9380`
-- `cascade-0f006813`
-- `stock-sync-11d50614`
+- `cascade-8c344397`
+- `pay-retry-d5ead316`
+- `ASYNC-ORPHAN`
+- `ASYNC-pay-retry-d5ead316`
+- `blind-033cea17`
+- `ASYNC-blind-033cea17`
+- `cascade-59105e18`
+- `ASYNC-cascade-59105e18`
+- `pay-poll-dfed7db2`
+- `pay-retry-7c9bf67f`
+- `ASYNC-pay-retry-7c9bf67f`
+- `cascade-3b062485`
+- `ASYNC-cascade-3b062485`
+- `blind-d5e9bd1f`
+- `ASYNC-blind-d5e9bd1f`
+- `pay-poll-6b9626b0`
+- `pay-retry-4804dc57`
+- `ASYNC-pay-retry-4804dc57`
+- `recon-5083ffa6`
+- `cascade-3bec71fe`
+- `ASYNC-cascade-3bec71fe`
+- `pay-retry-f03dee31`
+- `ASYNC-pay-retry-f03dee31`
+- `pay-poll-e707d50b`
+- `ASYNC-pay-poll-e707d50b`
+- `blind-e95b68c2`
+- `pay-retry-999d0356`
+- `ASYNC-pay-retry-999d0356`
+- `cascade-0c74c0a3`
+- `ASYNC-cascade-0c74c0a3`
+- `pay-poll-412d498f`
+- `ASYNC-pay-poll-412d498f`
+- `pay-retry-06efa7ee`
+- `ASYNC-pay-retry-06efa7ee`
+- `blind-91f842a9`
+- `cascade-e4f0d393`
+- `ASYNC-cascade-e4f0d393`
+- `pay-retry-d7e8c2ae`
+- `ASYNC-pay-retry-d7e8c2ae`
+- `pay-poll-86816fcf`
+- `recon-08fa0ba5`
+- `ASYNC-cascade-8c344397`
+- `pay-retry-87d4646d`
+- `ASYNC-pay-retry-87d4646d`
+- `blind-3f8208af`
+- `ASYNC-blind-3f8208af`
+- `pay-poll-22648bd5`
+- `pay-retry-81c1f96c`
+- `ASYNC-pay-retry-81c1f96c`
 
 ## Evidence Logs
 
 ```
-inv health check start items=5
+Payment initiated for orderId=5823a372-bf87-4abe-919d-24d28f90005c amount=179.97
 ```
 ```
-Hard stock deduction initiated for PROD-005 qty=999
+Payment initiated for orderId=27f80cd5-cf7d-469d-a74e-73a0b24af61b amount=79.98
 ```
 ```
-Unexpected negative stock detected for PROD-005 value=-367593
+Payment record persisted paymentId=e60d3a33-03e1-40ee-9019-5f500bcfc009
 ```
 ```
-Deduction complete for PROD-005 newStock=-367593
+async confirm timed out — notification not dispatched
 ```
 ```
-Stock reservation requested for PROD-001 qty=5
+Payment flow complete paymentId=e60d3a33-03e1-40ee-9019-5f500bcfc009 orderId=27f80cd5-cf7d-469d-a74e-73a0b24af61b
 ```
 ```
-store momentarily unavailable, hold not applied
+Payment initiated for orderId=27f80cd5-cf7d-469d-a74e-73a0b24af61b amount=79.98
 ```
 ```
-Stock released for PROD-001 restoredTo=5
+Payment proceeding for order status=PAID orderId=27f80cd5-cf7d-469d-a74e-73a0b24af61b
 ```
 ```
-Stock reservation requested for PROD-002 qty=1
+Payment record persisted paymentId=d62d0bb8-7d5b-4980-908d-21e1c3285866
 ```
 ```
-inv svc timeout — reservation incomplete prod=PROD-002
+Payment confirmation dispatched for paymentId=d62d0bb8-7d5b-4980-908d-21e1c3285866
 ```
 ```
-Stock released for PROD-002 restoredTo=1
+Payment flow complete paymentId=d62d0bb8-7d5b-4980-908d-21e1c3285866 orderId=27f80cd5-cf7d-469d-a74e-73a0b24af61b
 ```
 
 ---
