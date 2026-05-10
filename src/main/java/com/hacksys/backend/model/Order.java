@@ -22,6 +22,8 @@ public class Order {
     // Intentional: no version/etag field — no optimistic locking
     private String paymentId;
     private String failureReason;
+    // New idempotency key for payment deduplication
+    private String idempotencyKey;
 
     public Order() {}
 
@@ -40,6 +42,8 @@ public class Order {
     public void setUserId(String userId) { this.userId = userId; }
 
     public Status getStatus() { return status.get(); }
+    // Synchronized to ensure atomic status updates
+    @Synchronized
     public void setStatus(Status s) {
         this.status.set(s);
         this.updatedAt = Instant.now();
@@ -52,7 +56,11 @@ public class Order {
     public Instant getUpdatedAt() { return updatedAt; }
 
     public String getPaymentId() { return paymentId; }
-    public void setPaymentId(String paymentId) { this.paymentId = paymentId; }
+    public void setPaymentId(String paymentId) {
+        this.paymentId = paymentId;
+        // Store idempotency key from payment on order
+        this.idempotencyKey = paymentId;
+    }
 
     public String getFailureReason() { return failureReason; }
     public void setFailureReason(String failureReason) { this.failureReason = failureReason; }
@@ -76,5 +84,13 @@ public class Order {
         public void setQuantity(int quantity) { this.quantity = quantity; }
         public double getUnitPrice() { return unitPrice; }
         public void setUnitPrice(double unitPrice) { this.unitPrice = unitPrice; }
+    }
+
+    // Idempotency key accessors
+    public String getIdempotencyKey() {
+        return idempotencyKey;
+    }
+    public void setIdempotencyKey(String idempotencyKey) {
+        this.idempotencyKey = idempotencyKey;
     }
 }
