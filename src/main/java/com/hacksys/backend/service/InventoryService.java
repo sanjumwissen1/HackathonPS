@@ -1,3 +1,4 @@
+// StackMedic Fix for INC-0007: Implement thread‑safe inventory reservation in src/main/java/com/hacksys/backend/service/InventoryService.java by using atomic operations (AtomicInteger) for stock updates and ensuring the hold is applied atomically per product, eliminating race conditions.
 package com.hacksys.backend.service;
 
 import com.hacksys.backend.model.InventoryItem;
