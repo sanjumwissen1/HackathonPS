@@ -19,6 +19,8 @@ public class Order {
     private List<OrderItem> items;
     private Instant createdAt;
     private Instant updatedAt;
+    // Optimistic Locking Field: Added version for transactional integrity
+    private Long version;
     // Intentional: no version/etag field — no optimistic locking
     private String paymentId;
     private String failureReason;
@@ -50,6 +52,10 @@ public class Order {
 
     public Instant getCreatedAt() { return createdAt; }
     public Instant getUpdatedAt() { return updatedAt; }
+
+    // Getter and Setter for Version field (Optimistic Locking)
+    public Long getVersion() { return version; }
+    public void setVersion(Long version) { this.version = version; }
 
     public String getPaymentId() { return paymentId; }
     public void setPaymentId(String paymentId) { this.paymentId = paymentId; }
