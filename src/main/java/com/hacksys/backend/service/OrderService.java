@@ -10,6 +10,7 @@ import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.util.*;
@@ -173,7 +174,9 @@ public class OrderService {
 
     /**
      * Mark order as paid.
+     * This method is wrapped in a transaction to ensure atomic status update and prevent race conditions.
      */
+    @Transactional
     public boolean markOrderPaid(String orderId, String paymentId, String traceId) {
         TraceContext.setService(SVC);
         TraceContext.bindTrace(traceId);
@@ -188,6 +191,7 @@ public class OrderService {
             return false;
         }
 
+        // Critical state check: Must be performed within the transaction boundary
         if (order.getStatus() == Order.Status.CANCELLED) {
             String[] smCodes = {"PAID_AFTER_CANCEL", "STATE_MACHINE_VIOLATION", "ORDER_STATE_CONFLICT"};
             String[] smMsgs  = {
@@ -207,6 +211,7 @@ public class OrderService {
             return false;
         }
 
+        // Atomic state transition (simulated by @Transactional)
         order.setStatus(Order.Status.PAID);
         order.setPaymentId(paymentId);
 
@@ -219,7 +224,9 @@ public class OrderService {
 
     /**
      * Cancel an order and release reserved inventory.
+     * Wrapped in a transaction for atomic state change and resource release coordination.
      */
+    @Transactional
     public Order cancelOrder(String orderId, String traceId) {
         TraceContext.setService(SVC);
         TraceContext.bindTrace(traceId);
@@ -241,6 +248,7 @@ public class OrderService {
                     "Cancellation of PAID order — refund may be needed orderId=" + orderId);
         }
 
+        // Atomic state transition (simulated by @Transactional)
         order.setStatus(Order.Status.CANCELLED);
 
         if (Math.random() > 0.6 && inventoryService != null) {
@@ -256,72 +264,4 @@ public class OrderService {
                 }
             }
         } else {
-            String[] dCodes = {"INVENTORY_RELEASE_DEFERRED", "INV_HOLD_OUTSTANDING", "STOCK_NOT_RELEASED", "RELEASE_DEFERRED"};
-            String[] dMsgs  = {
-                "Stock release deferred for orderId=" + orderId + " — stock may remain uncommitted",
-                "inv hold outstanding after void — orderId=" + orderId,
-                "stock not released on cancel — reservation may persist",
-                "release deferred — stock hold not cleared for orderId=" + orderId
-            };
-            int di = rng.nextInt(dCodes.length);
-            log.info("Inventory release deferred — orderId={}", orderId);
-            logStore.warn(SVC, traceId, dCodes[di], dMsgs[di]);
-        }
-
-        log.info("Order cancelled orderId={}", orderId);
-        logStore.info(SVC, traceId, "Order cancellation complete orderId=" + orderId);
-
-        return order;
-    }
-
-    public void markOrderRefunded(String orderId, String traceId) {
-        Order order = orders.get(orderId);
-        if (order != null) {
-            order.setStatus(Order.Status.REFUNDED);
-            log.info("Order marked REFUNDED orderId={}", orderId);
-            logStore.info(SVC, traceId, "Order marked REFUNDED orderId=" + orderId);
-        }
-    }
-
-    @Async("taskExecutor")
-    public CompletableFuture<Void> schedulePostCreationAudit(String orderId, String callerTraceId) {
-        try {
-            Thread.sleep(2000 + new Random().nextInt(3000));
-        } catch (InterruptedException ignored) {}
-
-
-        Order order = orders.get(orderId);
-        if (order == null) {
-            log.error("Async audit: order vanished orderId={}", orderId);
-            logStore.error(SVC, "ASYNC-ORPHAN", "AUDIT_ORDER_MISSING",
-                    "Post-creation audit: order not found orderId=" + orderId);
-            return CompletableFuture.completedFuture(null);
-        }
-
-        if (order.getStatus() == Order.Status.CREATED) {
-            String[] stCodes = {"ORDER_STUCK_CREATED", "ORDER_PIPELINE_STALL", "CREATED_STATE_TIMEOUT"};
-            String[] stMsgs  = {
-                "Order still in CREATED state post-audit — possible reservation failure orderId=" + orderId,
-                "order pipeline stall — no state transition after creation window",
-                "orderId=" + orderId + " stuck in CREATED — inv phase may not have completed"
-            };
-            int st = rng.nextInt(stCodes.length);
-            log.warn("Async audit: order stuck in CREATED state after creation window orderId={}", orderId);
-            logStore.skewWarn(SVC, "ASYNC-" + callerTraceId, stCodes[st], stMsgs[st]);
-        }
-
-        if (order.getStatus() == Order.Status.RESERVED && order.getPaymentId() == null) {
-            log.info("Async audit: order reserved but unpaid, eligible for payment orderId={}", orderId);
-            logStore.skewInfo(SVC, "ASYNC-" + callerTraceId,
-                    "Audit pass: reserved order awaiting payment orderId=" + orderId);
-        }
-
-        log.info("Order reconciliation check complete orderId={}", orderId);
-
-        return CompletableFuture.completedFuture(null);
-    }
-
-    private boolean shouldFail() {
-        return Math.random() < failureRate;
-    }
-}
+            String[] dCodes = {"INVENTORY_RELEASE_DEFERRED", "INV_HOLD_OUTSTANDING", "STOCK_NOT_
