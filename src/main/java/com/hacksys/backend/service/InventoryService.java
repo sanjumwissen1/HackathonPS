@@ -1,3 +1,4 @@
+// StackMedic Fix for INC-0003: Modify the hard stock deduction method within InventoryService.java. Implement pre-deduction validation logic to check if the proposed deduction quantity, when applied to the current stock level, would result in a value below zero (or below a defined minimum threshold). If the resulting stock is negative, the operation must fail gracefully and throw an exception, preventing the update of the inventory record.
 package com.hacksys.backend.service;
 
 import com.hacksys.backend.model.InventoryItem;
