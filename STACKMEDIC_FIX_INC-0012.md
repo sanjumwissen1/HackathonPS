@@ -3,136 +3,127 @@
 | Field | Value |
 |---|---|
 | **Incident ID** | `INC-0012` |
-| **Generated** | 2026-05-10T09:25:56.140253600Z |
+| **Generated** | 2026-05-10T09:45:40.644622300Z |
 | **Service** | InventoryService |
 | **Severity** | CRITICAL |
 | **Status** | REMEDIATING |
-| **RCA Confidence** | 92% |
+| **RCA Confidence** | 0% |
 
 ---
 
 ## Root Cause
 
-The inventory system is experiencing a critical data consistency issue where stock levels are becoming negative or zero across multiple products (PROD-001, PROD-002, PROD-004, PROD-005). The evidence shows PROD-005 has a remaining stock of -339625, indicating severe inventory underflow. This appears to be caused by a race condition or synchronization failure in the stock reservation/release mechanism, where concurrent operations are not properly coordinating updates to inventory levels, leading to overselling and negative stock balances.
+_Not available_
 
 ## Impact
 
-Critical business impact affecting the core inventory management system. Multiple products are showing zero or negative stock levels, preventing new reservations and potentially blocking customer orders. The high volume of retry operations (visible in trace IDs) indicates cascading failures across dependent services including payment processing, stock synchronization, and reconciliation systems. This could result in lost sales, customer dissatisfaction, and data integrity issues requiring manual intervention to correct inventory balances.
+_Not assessed_
 
 ## Code Fix Applied
 
-AI could not generate a code fix — see report file for root cause details.
+Code fix failed (Cannot update file: HTTP 409 CONFLICT — {"message":"src/main/java/com/hacksys/backend/service/InventoryService.java does not match edd6a992ced0fad8a03f2ba423054215eb0cee53","documentation_url":"https://docs.github.com/rest/repos/contents#create-or-update-file-contents","status":"409"}) — see report file for root cause.
 
 ## Error Patterns
 
 - `NONE`
 - `INSUFFICIENT_STOCK`
-- `LOW_STOCK_ALERT`
+- `NEGATIVE_STOCK`
+- `INV_LEVEL_WARN`
 - `HIGH_RESERVATION_RATIO`
 - `STOCK_THRESHOLD_BREACH`
-- `INV_LEVEL_WARN`
-- `STOCK_BELOW_ZERO`
-- `STORE_TIMEOUT`
-- `WAREHOUSE_DELAY`
+- `LOW_STOCK_ALERT`
 - `INV_SVC_TIMEOUT`
-- `INV_TIMEOUT`
-- `NEGATIVE_STOCK`
-- `STOCK_LEVEL_ANOMALY`
 - `INV_COUNTER_UNDERFLOW`
-- `NULL_USER_ID`
+- `STORE_TIMEOUT`
+- `INV_TIMEOUT`
+- `STOCK_BELOW_ZERO`
+- `WAREHOUSE_DELAY`
 - `ITEM_RESERVATION_FAILED`
 - `PARTIAL_RESERVATION`
+- `STOCK_LEVEL_ANOMALY`
 
 ## Trace IDs
 
-- `retry-b7284991`
-- `pay-poll-aad640c8`
-- `retry-6f764259`
-- `sched-inv-9023`
-- `cascade-36481740`
-- `recon-4168aa98`
-- `stock-sync-6df8e179`
-- `blind-d2bd6a6c`
-- `sched-inv-1555`
-- `recon-4d19ae60`
-- `pay-poll-89dd2129`
-- `pay-retry-add75fd8`
-- `stock-sync-897094ba`
-- `recon-66844ba2`
-- `retry-cbcac00d`
-- `sched-inv-7312`
-- `pay-retry-29a60ee5`
-- `recon-c776afb7`
-- `cascade-1816103d`
-- `blind-79d82f44`
-- `pay-poll-5d3cf5ee`
-- `stock-sync-78cceeac`
-- `retry-06406aa1`
-- `sched-inv-9380`
-- `pay-retry-6bd7ec9a`
-- `recon-0cc231d1`
-- `cascade-5eeb3b5d`
-- `retry-afe43162`
-- `sched-inv-2860`
-- `stock-sync-ba204507`
-- `recon-41eefbb3`
-- `pay-poll-2fdda82a`
-- `pay-retry-943ba7c1`
-- `blind-90cd5de9`
-- `recon-7f97f43e`
-- `sched-inv-5199`
-- `stock-sync-aabf432c`
-- `cascade-f8d618f6`
-- `pay-retry-bb28cc2e`
-- `recon-3fb05a6c`
-- `pay-poll-9b06df84`
-- `retry-4460876a`
-- `sched-inv-825`
-- `stock-sync-038f5681`
-- `blind-130ce0eb`
-- `recon-68a05873`
-- `pay-retry-7d5ae701`
-- `cascade-b69e226a`
-- `sched-inv-9937`
-- `recon-a8fb4164`
-- `stock-sync-ca1be95e`
-- `recon-7035200c`
-- `blind-1857bf63`
-- `cascade-909c4fb6`
-- `sched-inv-1305`
-- `stock-sync-37751050`
+- `recon-546e0f53`
+- `recon-372b183c`
+- `cascade-08b92618`
+- `stock-sync-b057e727`
+- `recon-dc919ca7`
+- `sched-inv-9410`
+- `pay-retry-839ddc0b`
+- `blind-64a5b143`
+- `recon-1c8f966f`
+- `stock-sync-b31b3e3a`
+- `retry-1d2a5365`
+- `sched-inv-7332`
+- `recon-d7de9f16`
+- `pay-poll-36e17568`
+- `stock-sync-7f82a3e2`
+- `cascade-145cb2a1`
+- `recon-2f47b6ca`
+- `pay-retry-afa41f71`
+- `retry-c1a0292c`
+- `sched-inv-1648`
+- `stock-sync-56024ab5`
+- `recon-f02374e8`
+- `pay-poll-e7e0df25`
+- `pay-retry-930d6d60`
+- `retry-9357b1cd`
+- `sched-inv-9665`
+- `stock-sync-48ef0fc6`
+- `pay-retry-f9915186`
+- `recon-aa7d6455`
+- `pay-poll-d6410438`
+- `retry-e21c99e7`
+- `sched-inv-4589`
+- `stock-sync-e43c7e34`
+- `recon-c51efabc`
+- `pay-retry-6ac0f050`
+- `blind-247d725e`
+- `retry-c0e6634b`
+- `sched-inv-827`
+- `pay-poll-b7ad840e`
+- `recon-70cde152`
+- `cascade-f2716919`
+- `stock-sync-6a518b88`
+- `retry-0620ff02`
+- `sched-inv-5825`
+- `blind-4589482c`
+- `stock-sync-24ad27d7`
+- `pay-retry-39eacc2f`
+- `recon-6f784fee`
 
 ## Evidence Logs
 
 ```
+Stock reservation requested for PROD-003 qty=4
+```
+```
+Stock reservation requested for PROD-005 qty=1
+```
+```
+cannot reserve — stock level below threshold for PROD-005
+```
+```
+Stock reservation requested for PROD-004 qty=2
+```
+```
+stock check fail: have=0 need=2
+```
+```
 Stock reservation requested for PROD-001 qty=1
 ```
 ```
-Stock reservation requested for PROD-002 qty=1
+stock check fail: have=0 need=1
 ```
 ```
-insufficient stock — available=0 requested=1 sku=PROD-002
+Hard stock deduction initiated for PROD-005 qty=999
 ```
 ```
-Stock released for PROD-002 restoredTo=1
+Unexpected negative stock detected for PROD-005 value=-364596
 ```
 ```
-Stock reservation requested for PROD-001 qty=1
-```
-```
-insufficient stock — available=0 requested=1 sku=PROD-001
-```
-```
-inv health check start items=5
-```
-```
-Scheduled check: low stock for PROD-005 remaining=-339625
-```
-```
-reservation ratio elevated for PROD-005 reserved=0
-```
-```
-stock level below threshold sku=PROD-004 level=0
+Deduction complete for PROD-005 newStock=-364596
 ```
 
 ---
