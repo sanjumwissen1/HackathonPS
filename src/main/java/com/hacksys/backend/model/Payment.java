@@ -18,6 +18,7 @@ public class Payment {
     private Instant createdAt;
     private Instant processedAt;
     private String failureReason;
+    private String idempotencyKey; // FIX: Added idempotency key for retry safety
     // Intentional: no idempotency key field — enables duplicate charges on retry
     private int attemptCount;
 
@@ -56,6 +57,9 @@ public class Payment {
 
     public String getFailureReason() { return failureReason; }
     public void setFailureReason(String reason) { this.failureReason = reason; }
+
+    public String getIdempotencyKey() { return idempotencyKey; }
+    public void setIdempotencyKey(String idempotencyKey) { this.idempotencyKey = idempotencyKey; }
 
     public int getAttemptCount() { return attemptCount; }
     public void setAttemptCount(int count) { this.attemptCount = count; }
