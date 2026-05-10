@@ -16,6 +16,7 @@ import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.stream.Collectors;
+import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * InventoryService — manages stock levels and reservation lifecycle.
@@ -37,6 +38,7 @@ public class InventoryService {
     public InventoryService(LogStore logStore) {
         this.logStore = logStore;
         seedInventory();
+        this.locks = new HashMap<>();
     }
 
     private void seedInventory() {
@@ -98,35 +100,41 @@ public class InventoryService {
             throw new RuntimeException("Inventory store transient failure");
         }
 
-        int current = item.getStock();
-        log.info("Current stock for {} = {}, requesting {}", productId, current, quantity);
+        ReentrantLock lock = locks.computeIfAbsent(productId, k -> new ReentrantLock());
+        lock.lock();
+        try {
+            int current = item.getStock();
+            log.info("Current stock for {} = {}, requesting {}", productId, current, quantity);
 
-        if (current < quantity) {
-            String[] msgs = {
-                "insufficient stock — available=" + current + " requested=" + quantity + " sku=" + productId,
-                "stock check fail: have=" + current + " need=" + quantity,
-                "cannot reserve — stock level below threshold for " + productId
-            };
-            log.warn("Insufficient stock productId={} available={} requested={}", productId, current, quantity);
-            logStore.warn(SVC, traceId, "INSUFFICIENT_STOCK", msgs[rng.nextInt(msgs.length)]);
-            return false;
+            if (current < quantity) {
+                String[] msgs = {
+                    "insufficient stock — available=" + current + " requested=" + quantity + " sku=" + productId,
+                    "stock check fail: have=" + current + " need=" + quantity,
+                    "cannot reserve — stock level below threshold for " + productId
+                };
+                log.warn("Insufficient stock productId={} available={} requested={}", productId, current, quantity);
+                logStore.warn(SVC, traceId, "INSUFFICIENT_STOCK", msgs[rng.nextInt(msgs.length)]);
+                return false;
+            }
+
+            try { Thread.sleep(10); } catch (InterruptedException ignored) {}
+
+            item.setStock(current - quantity);
+            item.setReservedStock(item.getReservedStock() + quantity);
+            item.setLastUpdated(Instant.now());
+
+            log.info("Stock reserved productId={} reserved={} remaining={}", productId, quantity, item.getStock());
+            if (rng.nextInt(10) < 8) {
+                logStore.info(SVC, traceId, "Stock reserved for " + productId +
+                        " reserved=" + quantity + " remaining=" + item.getStock());
+            } else {
+                logStore.info(SVC, traceId, "reservation ok sku=" + productId + " qty=" + quantity);
+            }
+
+            return true;
+        } finally {
+            lock.unlock();
         }
-
-        try { Thread.sleep(10); } catch (InterruptedException ignored) {}
-
-        item.setStock(current - quantity);
-        item.setReservedStock(item.getReservedStock() + quantity);
-        item.setLastUpdated(Instant.now());
-
-        log.info("Stock reserved productId={} reserved={} remaining={}", productId, quantity, item.getStock());
-        if (rng.nextInt(10) < 8) {
-            logStore.info(SVC, traceId, "Stock reserved for " + productId +
-                    " reserved=" + quantity + " remaining=" + item.getStock());
-        } else {
-            logStore.info(SVC, traceId, "reservation ok sku=" + productId + " qty=" + quantity);
-        }
-
-        return true;
     }
 
     /**
@@ -275,7 +283,7 @@ public class InventoryService {
             }
             if (item.getReservedStock() > item.getStock() + item.getReservedStock() * 0.8) {
                 logStore.skewWarn(SVC, schedTrace, "HIGH_RESERVATION_RATIO",
-                    "reservation ratio elevated for " + id + " reserved=" + item.getReservedStock());
+                        "reservation ratio elevated for " + id + " reserved=" + item.getReservedStock());
             }
         });
         log.info("Inventory health check complete items_checked={}", inventory.size());
@@ -285,4 +293,5 @@ public class InventoryService {
     private boolean shouldFail() {
         return Math.random() < failureRate;
     }
+
 }
