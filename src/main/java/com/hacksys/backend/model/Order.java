@@ -40,10 +40,28 @@ public class Order {
     public void setUserId(String userId) { this.userId = userId; }
 
     public Status getStatus() { return status.get(); }
-    public void setStatus(Status s) {
-        this.status.set(s);
-        this.updatedAt = Instant.now();
+    /**
+     * Attempts an atomic transition of the order status from expectedStatus to newStatus.
+     * This method uses CAS (Compare-And-Swap) logic to ensure that the state change only occurs 
+     * if the current status matches the expected prerequisite, preventing lost updates due to race conditions.
+     * @param expectedStatus The required current status for the transition to be valid.
+     * @param newStatus The desired final status.
+     * @return true if the transition was successful and committed atomically, false otherwise.
+     */
+    public boolean transitionTo(Status expectedStatus, Status newStatus) {
+        if (expectedStatus == null || newStatus == null) {
+            throw new IllegalArgumentException("Expected and new statuses must not be null.");
+        }
+        
+        // Use CAS loop to ensure atomicity: check current state AND update in one atomic operation.
+        if (status.compareAndSet(expectedStatus, newStatus)) {
+            this.updatedAt = Instant.now();
+            return true;
+        }
+        return false; // Transition failed because the status was not expectedStatus at the time of CAS attempt.
     }
+
+    // Removed unsafe setStatus method to enforce transactional transition logic via transitionTo()
 
     public List<OrderItem> getItems() { return items; }
     public void setItems(List<OrderItem> items) { this.items = items; }
