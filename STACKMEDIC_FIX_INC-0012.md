@@ -3,67 +3,44 @@
 | Field | Value |
 |---|---|
 | **Incident ID** | `INC-0012` |
-| **Generated** | 2026-05-10T09:45:40.644622300Z |
+| **Generated** | 2026-05-10T09:49:31.877588100Z |
 | **Service** | InventoryService |
 | **Severity** | CRITICAL |
 | **Status** | REMEDIATING |
-| **RCA Confidence** | 0% |
+| **RCA Confidence** | 92% |
 
 ---
 
 ## Root Cause
 
-_Not available_
+A massive hard stock deduction of 999 units was initiated for PROD-005, which had insufficient inventory to support this operation. This caused the stock level to go negative (-367593), indicating the product had approximately 632 units available before the deduction. This suggests either a data corruption issue, an erroneous bulk operation, or a system bug that allowed an oversized deduction to proceed without proper validation checks.
 
 ## Impact
 
-_Not assessed_
+Critical inventory data corruption affecting PROD-005 with severe negative stock levels. Secondary impacts include store timeouts, inventory service timeouts causing incomplete reservations for other products (PROD-001, PROD-002), and cascading failures across the inventory management system. This likely prevents accurate stock tracking, order fulfillment, and could lead to overselling or underselling scenarios across the platform.
 
 ## Code Fix Applied
 
-Code fix failed (Cannot update file: HTTP 409 CONFLICT — {"message":"src/main/java/com/hacksys/backend/service/InventoryService.java does not match edd6a992ced0fad8a03f2ba423054215eb0cee53","documentation_url":"https://docs.github.com/rest/repos/contents#create-or-update-file-contents","status":"409"}) — see report file for root cause.
+Added stock validation check in deductStock method to prevent negative stock levels by checking if sufficient inventory exists before performing the deduction operation.
 
 ## Error Patterns
 
 - `NONE`
-- `INSUFFICIENT_STOCK`
 - `NEGATIVE_STOCK`
-- `INV_LEVEL_WARN`
-- `HIGH_RESERVATION_RATIO`
-- `STOCK_THRESHOLD_BREACH`
-- `LOW_STOCK_ALERT`
-- `INV_SVC_TIMEOUT`
-- `INV_COUNTER_UNDERFLOW`
 - `STORE_TIMEOUT`
 - `INV_TIMEOUT`
+- `INSUFFICIENT_STOCK`
+- `INV_LEVEL_WARN`
+- `HIGH_RESERVATION_RATIO`
+- `LOW_STOCK_ALERT`
+- `STOCK_THRESHOLD_BREACH`
 - `STOCK_BELOW_ZERO`
 - `WAREHOUSE_DELAY`
-- `ITEM_RESERVATION_FAILED`
-- `PARTIAL_RESERVATION`
 - `STOCK_LEVEL_ANOMALY`
 
 ## Trace IDs
 
-- `recon-546e0f53`
-- `recon-372b183c`
-- `cascade-08b92618`
-- `stock-sync-b057e727`
-- `recon-dc919ca7`
-- `sched-inv-9410`
-- `pay-retry-839ddc0b`
-- `blind-64a5b143`
-- `recon-1c8f966f`
-- `stock-sync-b31b3e3a`
-- `retry-1d2a5365`
-- `sched-inv-7332`
-- `recon-d7de9f16`
-- `pay-poll-36e17568`
-- `stock-sync-7f82a3e2`
-- `cascade-145cb2a1`
-- `recon-2f47b6ca`
-- `pay-retry-afa41f71`
-- `retry-c1a0292c`
-- `sched-inv-1648`
+- `sched-inv-5382`
 - `stock-sync-56024ab5`
 - `recon-f02374e8`
 - `pay-poll-e7e0df25`
@@ -86,44 +63,66 @@ Code fix failed (Cannot update file: HTTP 409 CONFLICT — {"message":"src/main/
 - `recon-70cde152`
 - `cascade-f2716919`
 - `stock-sync-6a518b88`
+- `recon-546e0f53`
 - `retry-0620ff02`
 - `sched-inv-5825`
 - `blind-4589482c`
 - `stock-sync-24ad27d7`
 - `pay-retry-39eacc2f`
 - `recon-6f784fee`
+- `retry-5969238a`
+- `sched-inv-342`
+- `pay-retry-c5acbf70`
+- `stock-sync-67841e92`
+- `pay-poll-1701eea5`
+- `blind-8909aaa6`
+- `sched-inv-4539`
+- `stock-sync-fdd37511`
+- `recon-90389129`
+- `retry-db424dd5`
+- `cascade-5b19a0ee`
+- `pay-retry-a4285c83`
+- `stock-sync-4e3dc995`
+- `recon-1344da53`
+- `blind-97873780`
+- `retry-f9e58a4e`
+- `sched-inv-6229`
+- `recon-0f1c5254`
+- `pay-retry-d4bf9380`
+- `cascade-0f006813`
+- `stock-sync-11d50614`
 
 ## Evidence Logs
 
 ```
-Stock reservation requested for PROD-003 qty=4
-```
-```
-Stock reservation requested for PROD-005 qty=1
-```
-```
-cannot reserve — stock level below threshold for PROD-005
-```
-```
-Stock reservation requested for PROD-004 qty=2
-```
-```
-stock check fail: have=0 need=2
-```
-```
-Stock reservation requested for PROD-001 qty=1
-```
-```
-stock check fail: have=0 need=1
+inv health check start items=5
 ```
 ```
 Hard stock deduction initiated for PROD-005 qty=999
 ```
 ```
-Unexpected negative stock detected for PROD-005 value=-364596
+Unexpected negative stock detected for PROD-005 value=-367593
 ```
 ```
-Deduction complete for PROD-005 newStock=-364596
+Deduction complete for PROD-005 newStock=-367593
+```
+```
+Stock reservation requested for PROD-001 qty=5
+```
+```
+store momentarily unavailable, hold not applied
+```
+```
+Stock released for PROD-001 restoredTo=5
+```
+```
+Stock reservation requested for PROD-002 qty=1
+```
+```
+inv svc timeout — reservation incomplete prod=PROD-002
+```
+```
+Stock released for PROD-002 restoredTo=1
 ```
 
 ---
