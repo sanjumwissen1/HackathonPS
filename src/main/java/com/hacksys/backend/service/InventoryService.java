@@ -68,7 +68,7 @@ public class InventoryService {
     /**
      * Reserve stock for an order.
      */
-    public boolean reserveStock(String productId, int quantity, String traceId) {
+    public synchronized boolean reserveStock(String productId, int quantity, String traceId) {
         TraceContext.setService(SVC);
         TraceContext.bindTrace(traceId);
         MDC.put("product_id", productId);
@@ -132,7 +132,7 @@ public class InventoryService {
     /**
      * Hard deduct (used by payment confirmation path).
      */
-    public boolean deductStock(String productId, int quantity, String traceId) {
+    public synchronized boolean deductStock(String productId, int quantity, String traceId) {
         TraceContext.setService(SVC);
         TraceContext.bindTrace(traceId);
 
@@ -155,7 +155,9 @@ public class InventoryService {
             return false;
         }
 
-        int newStock = item.getStockRef().addAndGet(-quantity);
+        int newStock = currentStock - quantity;
+        item.setStock(newStock);
+        
         if (newStock < 0) {
             String[] negCodes = {"NEGATIVE_STOCK", "STOCK_BELOW_ZERO", "INV_COUNTER_UNDERFLOW", "STOCK_LEVEL_ANOMALY"};
             String[] negMsgs = {
@@ -179,7 +181,7 @@ public class InventoryService {
     /**
      * Release reserved stock (called on cancel or refund).
      */
-    public boolean releaseStock(String productId, int quantity, String traceId) {
+    public synchronized boolean releaseStock(String productId, int quantity, String traceId) {
         TraceContext.setService(SVC);
         TraceContext.bindTrace(traceId);
 
@@ -193,7 +195,8 @@ public class InventoryService {
             return false;
         }
 
-        int restored = item.getStockRef().addAndGet(quantity);
+        int restored = item.getStock() + quantity;
+        item.setStock(restored);
         item.setReservedStock(Math.max(0, item.getReservedStock() - quantity));
         item.setLastUpdated(Instant.now());
 
@@ -206,7 +209,7 @@ public class InventoryService {
     /**
      * Admin update endpoint.
      */
-    public InventoryItem updateStock(String productId, int delta, String updatedBy, String traceId) {
+    public synchronized InventoryItem updateStock(String productId, int delta, String updatedBy, String traceId) {
         TraceContext.setService(SVC);
         TraceContext.bindTrace(traceId);
 
@@ -222,7 +225,8 @@ public class InventoryService {
             inventory.put(productId, item);
         }
 
-        int newStock = item.getStockRef().addAndGet(delta);
+        int newStock = item.getStock() + delta;
+        item.setStock(newStock);
         item.setLastUpdated(Instant.now());
         item.setLastUpdatedBy(updatedBy);
 
