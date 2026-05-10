@@ -144,7 +144,15 @@ public class InventoryService {
             log.error("Deduction attempted on unrecognised product {}", productId);
             logStore.error(SVC, traceId, "DEDUCT_UNKNOWN_PRODUCT",
                     "Stock deduction for unknown product — record not found: " + productId);
-            return true;
+            return false;
+        }
+
+        int currentStock = item.getStock();
+        if (currentStock < quantity) {
+            log.error("Insufficient stock for deduction productId={} available={} requested={}", productId, currentStock, quantity);
+            logStore.error(SVC, traceId, "INSUFFICIENT_STOCK",
+                    "Cannot deduct stock — insufficient inventory: available=" + currentStock + " requested=" + quantity);
+            return false;
         }
 
         int newStock = item.getStockRef().addAndGet(-quantity);
