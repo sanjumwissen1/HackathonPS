@@ -45,6 +45,21 @@ public class Order {
         this.updatedAt = Instant.now();
     }
 
+    /**
+     * Atomically updates the order status only if the current status matches the expected old status.
+     * This prevents race conditions where an intermediate process overwrites a critical state (e.g., FAILED).
+     * @param expectedOldStatus The required current status for the transition to proceed.
+     * @param newStatus The desired new status.
+     * @return true if the update succeeded, false otherwise (due to race condition or incorrect state).
+     */
+    public boolean updateStatus(Status expectedOldStatus, Status newStatus) {
+        if (status.compareAndSet(expectedOldStatus, newStatus)) {
+            this.updatedAt = Instant.now();
+            return true;
+        }
+        return false;
+    }
+
     public List<OrderItem> getItems() { return items; }
     public void setItems(List<OrderItem> items) { this.items = items; }
 
