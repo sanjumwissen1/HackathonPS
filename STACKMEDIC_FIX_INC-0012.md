@@ -3,128 +3,134 @@
 | Field | Value |
 |---|---|
 | **Incident ID** | `INC-0012` |
-| **Generated** | 2026-05-10T10:12:53.952334300Z |
-| **Service** | PaymentService |
+| **Generated** | 2026-05-10T10:40:52.333047100Z |
+| **Service** | InventoryService |
 | **Severity** | CRITICAL |
 | **Status** | REMEDIATING |
-| **RCA Confidence** | 30% |
+| **RCA Confidence** | 92% |
 
 ---
 
 ## Root Cause
 
-Automated analysis unavailable. Error type: NONE. Manual investigation required.
+The InventoryService is experiencing a cascading failure due to negative stock levels (PROD-005 showing -426529 quantity) which indicates a critical data integrity issue, likely caused by concurrent reservation processing without proper locking mechanisms or a bug in the stock adjustment logic. This has triggered widespread timeout issues as the service struggles to process reservations against corrupted inventory data.
 
 ## Impact
 
-Service degradation detected. Impact assessment pending manual review.
+Critical business impact affecting order fulfillment across multiple products (PROD-001 through PROD-005). Customers cannot complete purchases due to failed stock reservations, timeout errors are cascading through payment retry systems, and the negative stock levels indicate potential overselling has already occurred. Revenue loss and customer experience degradation are immediate concerns.
 
 ## Code Fix Applied
 
-AI could not generate a code fix — see report file for root cause details.
+Added synchronized keyword to all stock modification methods and replaced atomic operations with direct field access to prevent race conditions that were causing negative stock levels.
 
 ## Error Patterns
 
 - `NONE`
-- `PAY_CONFIRM_ERR`
-- `AUTH_ON_TERMINAL_ORDER`
-- `ORDER_SYNC_FAILURE`
-- `ASYNC_CONFIRM_TIMEOUT`
-- `ORDER_STATE_MISMATCH`
-- `PAY_GATEWAY_ERR`
-- `UNEXPECTED_ORDER_STATUS`
-- `GTWY_TMO`
-- `CONFIRM_NOTIFICATION_FAILED`
-- `PAYMENT_SVC_TIMEOUT`
+- `INV_TIMEOUT`
 - `INSUFFICIENT_STOCK`
+- `INV_LEVEL_WARN`
+- `HIGH_RESERVATION_RATIO`
+- `STOCK_THRESHOLD_BREACH`
+- `LOW_STOCK_ALERT`
+- `STOCK_LEVEL_ANOMALY`
+- `INV_SVC_TIMEOUT`
+- `STOCK_BELOW_ZERO`
+- `STORE_TIMEOUT`
+- `NEGATIVE_STOCK`
+- `WAREHOUSE_DELAY`
 - `ITEM_RESERVATION_FAILED`
-- `STATE_UNRESOLVED`
+- `PARTIAL_RESERVATION`
 - `INV_PHASE_INCOMPLETE`
 - `INV_RESERVATION_INCOMPLETE`
+- `UNEXPECTED_ORDER_STATUS`
 
 ## Trace IDs
 
-- `cascade-8c344397`
-- `pay-retry-d5ead316`
-- `ASYNC-ORPHAN`
-- `ASYNC-pay-retry-d5ead316`
-- `blind-033cea17`
-- `ASYNC-blind-033cea17`
-- `cascade-59105e18`
-- `ASYNC-cascade-59105e18`
-- `pay-poll-dfed7db2`
-- `pay-retry-7c9bf67f`
-- `ASYNC-pay-retry-7c9bf67f`
-- `cascade-3b062485`
-- `ASYNC-cascade-3b062485`
-- `blind-d5e9bd1f`
-- `ASYNC-blind-d5e9bd1f`
-- `pay-poll-6b9626b0`
-- `pay-retry-4804dc57`
-- `ASYNC-pay-retry-4804dc57`
-- `recon-5083ffa6`
-- `cascade-3bec71fe`
-- `ASYNC-cascade-3bec71fe`
-- `pay-retry-f03dee31`
-- `ASYNC-pay-retry-f03dee31`
-- `pay-poll-e707d50b`
-- `ASYNC-pay-poll-e707d50b`
-- `blind-e95b68c2`
-- `pay-retry-999d0356`
-- `ASYNC-pay-retry-999d0356`
-- `cascade-0c74c0a3`
-- `ASYNC-cascade-0c74c0a3`
-- `pay-poll-412d498f`
-- `ASYNC-pay-poll-412d498f`
-- `pay-retry-06efa7ee`
-- `ASYNC-pay-retry-06efa7ee`
-- `blind-91f842a9`
-- `cascade-e4f0d393`
-- `ASYNC-cascade-e4f0d393`
-- `pay-retry-d7e8c2ae`
-- `ASYNC-pay-retry-d7e8c2ae`
-- `pay-poll-86816fcf`
-- `recon-08fa0ba5`
-- `ASYNC-cascade-8c344397`
-- `pay-retry-87d4646d`
-- `ASYNC-pay-retry-87d4646d`
-- `blind-3f8208af`
-- `ASYNC-blind-3f8208af`
-- `pay-poll-22648bd5`
-- `pay-retry-81c1f96c`
-- `ASYNC-pay-retry-81c1f96c`
+- `cascade-c677ec64`
+- `pay-retry-84fcd29d`
+- `blind-a787ef84`
+- `retry-10448b83`
+- `sched-inv-183`
+- `stock-sync-b435e603`
+- `pay-retry-9c5420bb`
+- `recon-837ab7c4`
+- `retry-6268d62d`
+- `sched-inv-9744`
+- `stock-sync-1339873c`
+- `pay-retry-de92ab3c`
+- `cascade-dde2185d`
+- `recon-c20aa944`
+- `pay-poll-73b79d2f`
+- `sched-inv-1048`
+- `stock-sync-0029750f`
+- `pay-retry-f318deb0`
+- `recon-ab000c17`
+- `cascade-a26675c0`
+- `retry-0ef0a285`
+- `sched-inv-8267`
+- `pay-poll-2fa7f106`
+- `stock-sync-e5dfa242`
+- `recon-205c0878`
+- `pay-retry-585a24ef`
+- `recon-d46127aa`
+- `retry-ec81f7c9`
+- `sched-inv-5849`
+- `stock-sync-be7525df`
+- `pay-retry-7e89fd04`
+- `pay-poll-da63e6b5`
+- `recon-8586590b`
+- `blind-5409a0f1`
+- `retry-4bbef453`
+- `sched-inv-7502`
+- `cascade-3fd2a5dd`
+- `stock-sync-a5c6c026`
+- `pay-retry-d4270fcd`
+- `recon-50464143`
+- `pay-poll-459978b6`
+- `retry-1d2d2d49`
+- `sched-inv-8087`
+- `recon-6035b817`
+- `stock-sync-b2f7b1e2`
+- `recon-a39e1dd8`
+- `retry-ff716657`
+- `sched-inv-7864`
+- `pay-poll-385eb47d`
+- `stock-sync-46882d33`
+- `pay-retry-5ec9a889`
+- `recon-f17dce69`
+- `cascade-95a79bd9`
 
 ## Evidence Logs
 
 ```
-Payment initiated for orderId=5823a372-bf87-4abe-919d-24d28f90005c amount=179.97
+Stock reservation requested for PROD-004 qty=2
 ```
 ```
-Payment initiated for orderId=27f80cd5-cf7d-469d-a74e-73a0b24af61b amount=79.98
+Stock reservation requested for PROD-003 qty=2
 ```
 ```
-Payment record persisted paymentId=e60d3a33-03e1-40ee-9019-5f500bcfc009
+inv svc timeout — reservation incomplete prod=PROD-003
 ```
 ```
-async confirm timed out — notification not dispatched
+Stock reservation requested for PROD-002 qty=1
 ```
 ```
-Payment flow complete paymentId=e60d3a33-03e1-40ee-9019-5f500bcfc009 orderId=27f80cd5-cf7d-469d-a74e-73a0b24af61b
+stock check fail: have=0 need=1
 ```
 ```
-Payment initiated for orderId=27f80cd5-cf7d-469d-a74e-73a0b24af61b amount=79.98
+Stock reservation requested for PROD-001 qty=1
 ```
 ```
-Payment proceeding for order status=PAID orderId=27f80cd5-cf7d-469d-a74e-73a0b24af61b
+cannot reserve — stock level below threshold for PROD-001
 ```
 ```
-Payment record persisted paymentId=d62d0bb8-7d5b-4980-908d-21e1c3285866
+inv health check start items=5
 ```
 ```
-Payment confirmation dispatched for paymentId=d62d0bb8-7d5b-4980-908d-21e1c3285866
+low inventory warning — prod=PROD-005 qty=-426529
 ```
 ```
-Payment flow complete paymentId=d62d0bb8-7d5b-4980-908d-21e1c3285866 orderId=27f80cd5-cf7d-469d-a74e-73a0b24af61b
+reservation ratio elevated for PROD-005 reserved=0
 ```
 
 ---
