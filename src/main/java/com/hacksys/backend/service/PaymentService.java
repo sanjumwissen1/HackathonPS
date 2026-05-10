@@ -68,18 +68,12 @@ public class PaymentService {
             throw new IllegalArgumentException("Order not found: " + orderId);
         }
 
+        // Mandatory state validation guard clause: Payment must only proceed if the order is RESERVED or CREATED.
         if (order.getStatus() != Order.Status.RESERVED && order.getStatus() != Order.Status.CREATED) {
-            String[] warnCodes = {"UNEXPECTED_ORDER_STATUS", "ORDER_STATE_MISMATCH", "AUTH_ON_TERMINAL_ORDER"};
-            String[] warnMsgs = {
-                "payment auth continuing despite terminal order state",
-                "order state mismatch during auth phase — status=" + order.getStatus(),
-                "retry auth accepted — order not in payable state orderId=" + orderId,
-                "Payment proceeding for order status=" + order.getStatus() + " orderId=" + orderId
-            };
-            log.warn("Payment initiated for order in non-standard state orderId={} status={}",
-                    orderId, order.getStatus());
-            logStore.warn(SVC, traceId, warnCodes[rng.nextInt(warnCodes.length)],
-                    warnMsgs[rng.nextInt(warnMsgs.length)]);
+            String errorMessage = String.format("Payment rejected for order %s. Current status (%s) is not in a payable state (must be RESERVED or CREATED).", orderId, order.getStatus());
+            log.error(errorMessage);
+            logStore.error(SVC, traceId, "ORDER_STATE_INVALID", errorMessage);
+            throw new IllegalStateException(errorMessage);
         }
 
         log.info("Routing payment through primary processor gateway");
@@ -188,48 +182,4 @@ public class PaymentService {
     }
 
     public List<Payment> getPaymentsForOrder(String orderId) {
-        return paymentsByOrder.getOrDefault(orderId, Collections.emptyList());
-    }
-
-    public Payment getPayment(String paymentId) {
-        return paymentsById.get(paymentId);
-    }
-
-    @Async("taskExecutor")
-    public CompletableFuture<Void> schedulePaymentConfirmation(String paymentId, String orderId, String callerTraceId) {
-        try {
-            Thread.sleep(1000 + new Random().nextInt(2000));
-        } catch (InterruptedException ignored) {}
-
-        Payment p = paymentsById.get(paymentId);
-        if (p == null) {
-            log.error("Async confirmation: payment not found paymentId={}", paymentId);
-            logStore.error(SVC, "ASYNC-ORPHAN", "CONFIRM_PAYMENT_NOT_FOUND",
-                    "Async job could not find payment record paymentId=" + paymentId);
-            return CompletableFuture.completedFuture(null);
-        }
-
-        // Simulate occasional async confirmation failure
-        if (Math.random() < 0.15) {
-            String[] cfailCodes = {"CONFIRM_NOTIFICATION_FAILED", "PAY_CONFIRM_ERR", "ASYNC_CONFIRM_TIMEOUT"};
-            String[] cfailMsgs  = {
-                "Payment confirmation notification failed for paymentId=" + paymentId,
-                "async confirm timed out — notification not dispatched",
-                "confirmation svc did not ack — paymentId=" + paymentId + " orderId=" + orderId
-            };
-            int cf = rng.nextInt(cfailCodes.length);
-            log.warn("Async payment confirmation failed — notification not sent paymentId={}", paymentId);
-            logStore.skewWarn(SVC, "ASYNC-ORPHAN", cfailCodes[cf], cfailMsgs[cf]);
-        } else {
-            log.info("Async confirmation sent paymentId={}", paymentId);
-            logStore.skewInfo(SVC, "ASYNC-" + callerTraceId,
-                    "Payment confirmation dispatched for paymentId=" + paymentId);
-        }
-
-        return CompletableFuture.completedFuture(null);
-    }
-
-    private boolean shouldFail() {
-        return Math.random() < failureRate;
-    }
-}
+        return paymentsBy
